@@ -1,0 +1,21 @@
+# Ignore database files
+*.db
+
+# Ignore executable files
+*.exe
+*.out
+*.o
+*.a
+*.so
+*.dll
+
+# Ignore any other intermediate files
+*.obj
+*.class
+*.bin
+*.log
+
+# Ignore backup files
+*~
+*.bak
+*.swp
