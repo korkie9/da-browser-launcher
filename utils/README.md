@@ -5,5 +5,5 @@
   - For ubuntu based distros ``sudo apt install raylib``
 
 - In root directory run: ``make``
-- run "/da_profile_launcher" from root
+- run "/da_browser_launcher" from root
 
