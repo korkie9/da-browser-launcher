@@ -46,7 +46,7 @@ int main() {
   int index = 0;
   vector<Browser> browsers;
   string getBrowserQuery = "SELECT * FROM Browsers;";
-  sqlite3_exec(db, getBrowserQuery.c_str(), getBrowsersCallback, &profiles,
+  sqlite3_exec(db, getBrowserQuery.c_str(), getBrowsersCallback, &browsers,
                nullptr);
 
   while (!WindowShouldClose()) {
@@ -56,25 +56,20 @@ int main() {
     if (scrollingBack <= -background.width * 2)
       scrollingBack = 0;
     if (IsKeyPressed(KEY_J) && !showAddProfileTextBox) {
-      cout << static_cast<int>(profiles.size()) << endl;
       if (index + 1 < static_cast<int>(profiles.size())) {
         index++;
-        cout << "Incrementing: " << index << endl;
       }
     }
     if (IsKeyPressed(KEY_K) && !showAddProfileTextBox) {
       if (index - 1 > -1) {
-
         index--;
-        cout << "Decrementing" << index << endl;
       }
     }
     if (IsKeyPressed(KEY_D) && !showAddProfileTextBox) {
       if (index >= 0 && index <= (int)profiles.size() && profiles.size() > 0) {
 
-        cout << "Deleting " << index << endl;
         string deleteUserQuery =
-            "DELETE FROM Profiles WHERE name = '" + profiles[index].name + "'";
+            "DELETE FROM Profiles WHERE name = '" + profiles[index].name + "';";
         char *errMsg = nullptr;
 
         int rc = sqlite3_exec(db, deleteUserQuery.c_str(), getProfilesCallback,
@@ -91,17 +86,15 @@ int main() {
     if (IsKeyPressed(KEY_ENTER)) {
       if (!showAddProfileTextBox && !browsers.empty()) {
         string cmd = browsers[0].path + " -P " + profiles[index].name;
-        cout << cmd << endl;
         int hasLaunched = system(cmd.c_str());
         if (hasLaunched == 0)
           return 0;
-        cout << hasLaunched << endl;
       }
       if (showAddProfileTextBox) {
 
         if (text.size() > 0) {
           string addUserQuery =
-              "INSERT INTO Profiles (name) VALUES ('" + text + "')";
+              "INSERT INTO Profiles (name) VALUES ('" + text + "');";
           char *errMsg = nullptr;
 
           int rc = sqlite3_exec(db, addUserQuery.c_str(), getProfilesCallback,
@@ -115,6 +108,8 @@ int main() {
           }
         }
       }
+
+      text = "";
     }
     if (showAddProfileTextBox) {
 
@@ -141,7 +136,6 @@ int main() {
       addProfileBtnColor = LIGHTGRAY;
       if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         showAddProfileTextBox = true;
-        cout << selectedFilePath << endl;
       }
 
     } else {
@@ -153,11 +147,9 @@ int main() {
       if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         selectedFilePath =
             tinyfd_openFileDialog("Choose browser file", "", 0, NULL, NULL, 0);
-        cout << selectedFilePath << endl;
         if (selectedFilePath != nullptr) {
-          // hereeeeee
           string addBrowserQuery = "INSERT INTO Browsers (path) VALUES ('" +
-                                   (string)selectedFilePath + "')";
+                                   (string)selectedFilePath + "');";
           char *errMsg = nullptr;
 
           int rc = sqlite3_exec(db, addBrowserQuery.c_str(),
@@ -211,9 +203,10 @@ int main() {
       if (CheckCollisionPointRec(mousePosition, button)) {
         buttonColor = buttonHoverColor;
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-          cout << selectedFilePath << endl;
-          cout << "Button clicked: " << profiles[i].name << endl;
-          printf("%s, clieck; \n", profiles[i].name.c_str());
+          string cmd = browsers[0].path + " -P " + profiles[index].name;
+          int hasLaunched = system(cmd.c_str());
+          if (hasLaunched == 0)
+            return 0;
         }
       } else {
         buttonColor = DARKGRAY;
@@ -231,7 +224,6 @@ int main() {
       int key = GetCharPressed();
       if ((key >= 32) && (key <= 125) && text.size() < 22) {
         text += (char)key;
-        cout << text << endl;
       }
 
       DrawRectangleRounded(profileTextBox, 0.3f, 10, LIGHTGRAY);
@@ -288,7 +280,7 @@ int getProfilesCallback(void *data, int argc, char **argv, char **azColName) {
 }
 
 int getBrowsersCallback(void *data, int argc, char **argv, char **azColName) {
-  vector<Profile> *result = static_cast<vector<Profile> *>(data);
+  vector<Browser> *result = static_cast<vector<Browser> *>(data);
   if (argc > 0 && argv[0] != nullptr) {
     result->push_back({argv[0], argv[1]});
   }
