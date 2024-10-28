@@ -11,10 +11,15 @@
 #define MAX_INPUT_CHARS 20
 
 using namespace std;
-int callback(void *data, int argc, char **argv, char **azColName);
+int getProfilesCallback(void *data, int argc, char **argv, char **azColName);
+int getBrowsersCallback(void *data, int argc, char **argv, char **azColName);
 struct Profile {
   string id;
   string name;
+};
+struct Browser {
+  string id;
+  string path;
 };
 int main() {
   sqlite3 *db;
@@ -22,7 +27,7 @@ int main() {
   Profile profile;
   vector<Profile> profiles;
   string sqlQuery = "SELECT * FROM Profiles;";
-  sqlite3_exec(db, sqlQuery.c_str(), callback, &profiles, nullptr);
+  sqlite3_exec(db, sqlQuery.c_str(), getProfilesCallback, &profiles, nullptr);
   const int screenWidth = 800;
   const int screenHeight = 600;
   SetConfigFlags(FLAG_WINDOW_TRANSPARENT);
@@ -39,6 +44,10 @@ int main() {
   background.width = screenWidth;
   float scrollingBack = 0.0f;
   int index = 0;
+  vector<Browser> browsers;
+  string getBrowserQuery = "SELECT * FROM Browsers;";
+  sqlite3_exec(db, getBrowserQuery.c_str(), getBrowsersCallback, &profiles,
+               nullptr);
 
   while (!WindowShouldClose()) {
 
@@ -68,8 +77,8 @@ int main() {
             "DELETE FROM Profiles WHERE name = '" + profiles[index].name + "'";
         char *errMsg = nullptr;
 
-        int rc = sqlite3_exec(db, deleteUserQuery.c_str(), callback, &profiles,
-                              nullptr);
+        int rc = sqlite3_exec(db, deleteUserQuery.c_str(), getProfilesCallback,
+                              &profiles, nullptr);
         if (rc != SQLITE_OK) {
           std::cerr << "SQL error: " << errMsg << std::endl;
           sqlite3_free(errMsg);
@@ -80,10 +89,8 @@ int main() {
       }
     }
     if (IsKeyPressed(KEY_ENTER)) {
-      if (!showAddProfileTextBox) {
-        string tempBrowser =
-            "/home/justin/Documents/browsers/zen/zen-generic.AppImage";
-        string cmd = tempBrowser + " -P " + profiles[index].name;
+      if (!showAddProfileTextBox && !browsers.empty()) {
+        string cmd = browsers[0].path + " -P " + profiles[index].name;
         cout << cmd << endl;
         int hasLaunched = system(cmd.c_str());
         if (hasLaunched == 0)
@@ -97,8 +104,8 @@ int main() {
               "INSERT INTO Profiles (name) VALUES ('" + text + "')";
           char *errMsg = nullptr;
 
-          int rc = sqlite3_exec(db, addUserQuery.c_str(), callback, &profiles,
-                                nullptr);
+          int rc = sqlite3_exec(db, addUserQuery.c_str(), getProfilesCallback,
+                                &profiles, nullptr);
           if (rc != SQLITE_OK) {
             std::cerr << "SQL error: " << errMsg << std::endl;
             sqlite3_free(errMsg);
@@ -147,6 +154,22 @@ int main() {
         selectedFilePath =
             tinyfd_openFileDialog("Choose browser file", "", 0, NULL, NULL, 0);
         cout << selectedFilePath << endl;
+        if (selectedFilePath != nullptr) {
+          // hereeeeee
+          string addBrowserQuery = "INSERT INTO Browsers (path) VALUES ('" +
+                                   (string)selectedFilePath + "')";
+          char *errMsg = nullptr;
+
+          int rc = sqlite3_exec(db, addBrowserQuery.c_str(),
+                                getBrowsersCallback, &browsers, nullptr);
+          if (rc != SQLITE_OK) {
+            std::cerr << "SQL error: " << errMsg << std::endl;
+            sqlite3_free(errMsg);
+          } else {
+            browsers.push_back(
+                {to_string(profiles.size() + 1), selectedFilePath});
+          }
+        }
       }
 
     } else {
@@ -223,8 +246,7 @@ int main() {
 
     DrawRectangleRounded(addProfileBtn, 0.3f, 10, addProfileBtnColor);
     DrawRectangleRoundedLines(addProfileBtn, 0.3f, 10, 2.0f, BLUE);
-    DrawText("+", addProfileBtn.x + 20, addProfileBtn.y + (addProfileBtn.y / 2),
-             50, BLACK);
+    DrawText("+", addProfileBtn.x + 20, addProfileBtn.y + 5, 50, BLACK);
 
     Rectangle sourceRect = {0.0f, 0.0f, (float)convertableTexture.width,
                             (float)convertableTexture.height};
@@ -235,6 +257,15 @@ int main() {
         selectedFilePathBtn, // destination rectangle (scaled to window)
         Vector2{0, 0}, 0.0f, WHITE);
 
+    if (profiles.empty()) {
+      DrawText("No profile has been set", 10, 15, 24, RED);
+      DrawText("(Click DaPlus (+) sign to add profile)", 10, 35, 18, RED);
+    }
+    if (browsers.empty()) {
+      DrawText("DaBrowser has not been set", 10, screenHeight - 75, 22, RED);
+      DrawText("(Click DaConvertible to add set brower) =>", 10,
+               screenHeight - 45, 16, RED);
+    }
     EndDrawing();
   }
 
@@ -248,7 +279,15 @@ int main() {
   return 0;
 }
 
-int callback(void *data, int argc, char **argv, char **azColName) {
+int getProfilesCallback(void *data, int argc, char **argv, char **azColName) {
+  vector<Profile> *result = static_cast<vector<Profile> *>(data);
+  if (argc > 0 && argv[0] != nullptr) {
+    result->push_back({argv[0], argv[1]});
+  }
+  return 0;
+}
+
+int getBrowsersCallback(void *data, int argc, char **argv, char **azColName) {
   vector<Profile> *result = static_cast<vector<Profile> *>(data);
   if (argc > 0 && argv[0] != nullptr) {
     result->push_back({argv[0], argv[1]});

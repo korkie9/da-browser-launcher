@@ -14,7 +14,7 @@ SRC = main.cpp utils/db.cpp $(LIBS)
 OBJ = $(SRC:.cpp=.o)
 
 # Target executable
-TARGET = profile_launcher
+TARGET = da_profile_launcher
 
 all: $(TARGET)
 

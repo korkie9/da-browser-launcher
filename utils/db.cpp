@@ -17,7 +17,10 @@ bool openDb(sqlite3 **db) {
 
   const char *sqlCreateTable = "CREATE TABLE IF NOT EXISTS Profiles ("
                                "ID INTEGER PRIMARY KEY AUTOINCREMENT,"
-                               "NAME TEXT NOT NULL);";
+                               "NAME TEXT NOT NULL);"
+                               "CREATE TABLE IF NOT EXISTS Browsers ("
+                               "ID INTEGER PRIMARY KEY AUTOINCREMENT,"
+                               "PATH TEXT NOT NULL);";
 
   if (sqlite3_exec(*db, sqlCreateTable, nullptr, 0, &errMsg) != SQLITE_OK) {
     cerr << "SQL error: " << errMsg << endl;
