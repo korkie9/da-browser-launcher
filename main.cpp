@@ -11,8 +11,12 @@
 #define MAX_INPUT_CHARS 20
 
 using namespace std;
+
+struct Browser;
 int getProfilesCallback(void *data, int argc, char **argv, char **azColName);
 int getBrowsersCallback(void *data, int argc, char **argv, char **azColName);
+void openBrowserAndCloseProgram(sqlite3 *db, Texture2D *convertableTexture,
+                                string cmd);
 struct Profile {
   string id;
   string name;
@@ -73,23 +77,23 @@ int main() {
         char *errMsg = nullptr;
 
         int rc = sqlite3_exec(db, deleteUserQuery.c_str(), getProfilesCallback,
-                              &profiles, nullptr);
+                              &profiles, &errMsg);
+
         if (rc != SQLITE_OK) {
           std::cerr << "SQL error: " << errMsg << std::endl;
-          sqlite3_free(errMsg);
         } else {
           profiles.erase(profiles.begin() + index);
           showAddProfileTextBox = false;
         }
+        sqlite3_free(errMsg);
       }
     }
     if (IsKeyPressed(KEY_ENTER)) {
       if (!showAddProfileTextBox && !browsers.empty()) {
-        string cmd = browsers[0].path + " -P " + profiles[index].name;
-        int hasLaunched = system(cmd.c_str());
-        if (hasLaunched == 0)
-          return 0;
+        string cmd = browsers[0].path + " -P " + profiles[index].name + " &";
+        openBrowserAndCloseProgram(db, &convertableTexture, cmd);
       }
+      // here
       if (showAddProfileTextBox) {
 
         if (text.size() > 0) {
@@ -202,11 +206,9 @@ int main() {
 
       if (CheckCollisionPointRec(mousePosition, button)) {
         buttonColor = buttonHoverColor;
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-          string cmd = browsers[0].path + " -P " + profiles[index].name;
-          int hasLaunched = system(cmd.c_str());
-          if (hasLaunched == 0)
-            return 0;
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !browsers.empty()) {
+          string cmd = browsers[0].path + " -P " + profiles[index].name + " &";
+          openBrowserAndCloseProgram(db, &convertableTexture, cmd);
         }
       } else {
         buttonColor = DARKGRAY;
@@ -285,4 +287,14 @@ int getBrowsersCallback(void *data, int argc, char **argv, char **azColName) {
     result->push_back({argv[0], argv[1]});
   }
   return 0;
+}
+
+void openBrowserAndCloseProgram(sqlite3 *db, Texture2D *convertableTexture,
+                                string cmd) {
+  system(cmd.c_str());
+  if (db)
+    sqlite3_close(db);
+  UnloadTexture(*convertableTexture);
+  CloseWindow();
+  exit(0);
 }
