@@ -12,6 +12,7 @@ INCLUDES = -I./libtinyfiledialogs -I./utils
 LIBS = ./libtinyfiledialogs/tinyfiledialogs.c
 SRC = main.cpp utils/db.cpp $(LIBS)
 OBJ = $(SRC:.cpp=.o)
+DB=database.db
 
 # Target executable
 TARGET = da_browser_launcher
@@ -27,4 +28,4 @@ $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -f $(TARGET) $(DB)
