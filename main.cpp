@@ -277,11 +277,8 @@ int main() {
     Rectangle sourceRect = {0.0f, 0.0f, (float)convertableTexture.width,
                             (float)convertableTexture.height};
 
-    DrawTexturePro(
-        convertableTexture,
-        sourceRect,          // source rectangle
-        selectedFilePathBtn, // destination rectangle (scaled to window)
-        Vector2{0, 0}, 0.0f, WHITE);
+    DrawTexturePro(convertableTexture, sourceRect, selectedFilePathBtn,
+                   Vector2{0, 0}, 0.0f, WHITE);
 
     if (profiles.empty()) {
       DrawText("No profile has been set", 10, 15, 24, RED);
@@ -295,7 +292,7 @@ int main() {
     EndDrawing();
   }
 
-  UnloadTexture(convertableTexture); // Texture unloading
+  UnloadTexture(convertableTexture);
 
   // Close the window
   if (db) {
