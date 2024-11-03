@@ -59,9 +59,6 @@ int main() {
     scrollingBack -= 0.1f;
     if (showAddProfileTextBox) {
       int key = GetCharPressed();
-      if (IsKeyPressed(KEY_R) && !editProfile) {
-        text = "";
-      }
       if ((key >= 32) && (key <= 125) && text.size() < 22) {
         text += (char)key;
       }
