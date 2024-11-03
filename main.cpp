@@ -48,6 +48,7 @@ int main() {
   background.width = screenWidth;
   float scrollingBack = 0.0f;
   int index = 0;
+  bool editProfile = false;
   vector<Browser> browsers;
   string getBrowserQuery = "SELECT * FROM Browsers;";
   sqlite3_exec(db, getBrowserQuery.c_str(), getBrowsersCallback, &browsers,
@@ -56,15 +57,30 @@ int main() {
   while (!WindowShouldClose()) {
 
     scrollingBack -= 0.1f;
-
+    if (showAddProfileTextBox) {
+      int key = GetCharPressed();
+      if (IsKeyPressed(KEY_R) && !editProfile) {
+        text = "";
+      }
+      if ((key >= 32) && (key <= 125) && text.size() < 22) {
+        text += (char)key;
+      }
+    }
     if (scrollingBack <= -background.width * 2)
       scrollingBack = 0;
-    if (IsKeyPressed(KEY_J) && !showAddProfileTextBox) {
+    if ((IsKeyPressed(KEY_J) || IsKeyPressed(KEY_DOWN)) &&
+        !showAddProfileTextBox) {
       if (index + 1 < static_cast<int>(profiles.size())) {
         index++;
       }
     }
-    if (IsKeyPressed(KEY_K) && !showAddProfileTextBox) {
+    if (IsKeyPressed(KEY_R) && !showAddProfileTextBox) {
+      showAddProfileTextBox = true;
+      editProfile = true;
+      text = "";
+    }
+    if ((IsKeyPressed(KEY_K) || IsKeyPressed(KEY_DOWN)) &&
+        !showAddProfileTextBox) {
       if (index - 1 > -1) {
         index--;
       }
@@ -93,22 +109,44 @@ int main() {
         string cmd = browsers[0].path + " -P " + profiles[index].name + " &";
         openBrowserAndCloseProgram(db, &convertableTexture, cmd);
       }
-      // here
       if (showAddProfileTextBox) {
 
-        if (text.size() > 0) {
-          string addUserQuery =
-              "INSERT INTO Profiles (name) VALUES ('" + text + "');";
-          char *errMsg = nullptr;
+        if (!editProfile) {
 
-          int rc = sqlite3_exec(db, addUserQuery.c_str(), getProfilesCallback,
-                                &profiles, nullptr);
-          if (rc != SQLITE_OK) {
-            std::cerr << "SQL error: " << errMsg << std::endl;
-            sqlite3_free(errMsg);
-          } else {
-            profiles.push_back({to_string(profiles.size() + 1), text});
-            showAddProfileTextBox = false;
+          if (text.size() > 0) {
+            string addUserQuery =
+                "INSERT INTO Profiles (name) VALUES ('" + text + "');";
+            char *errMsg = nullptr;
+
+            int rc = sqlite3_exec(db, addUserQuery.c_str(), getProfilesCallback,
+                                  &profiles, nullptr);
+            if (rc != SQLITE_OK) {
+              std::cerr << "SQL error: " << errMsg << std::endl;
+              sqlite3_free(errMsg);
+            } else {
+              profiles.push_back({to_string(profiles.size() + 1), text});
+              showAddProfileTextBox = false;
+            }
+          }
+        } else {
+
+          if (text.size() > 0) {
+            string updateUserQuery = "UPDATE Profiles SET name = '" + text +
+                                     "' WHERE name = '" + profiles[index].name +
+                                     "';";
+            char *errMsg = nullptr;
+
+            int rc = sqlite3_exec(db, updateUserQuery.c_str(), nullptr,
+                                  &profiles, nullptr);
+            if (rc != SQLITE_OK) {
+              std::cerr << "SQL error: " << errMsg << std::endl;
+              sqlite3_free(errMsg);
+            } else {
+              profiles[index].name = text;
+              showAddProfileTextBox = false;
+              editProfile = false;
+              sqlite3_free(errMsg);
+            }
           }
         }
       }
@@ -116,7 +154,6 @@ int main() {
       text = "";
     }
     if (showAddProfileTextBox) {
-
       if (IsKeyPressed(KEY_BACKSPACE)) {
         if (text.size() > 0)
           text.pop_back();
@@ -222,11 +259,6 @@ int main() {
     }
 
     if (showAddProfileTextBox) {
-
-      int key = GetCharPressed();
-      if ((key >= 32) && (key <= 125) && text.size() < 22) {
-        text += (char)key;
-      }
 
       DrawRectangleRounded(profileTextBox, 0.3f, 10, LIGHTGRAY);
       DrawRectangleRoundedLines(profileTextBox, 0.3f, 10, 2.0f, BLUE);
