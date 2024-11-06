@@ -8,8 +8,11 @@
 
 
 ## Running the app
-- In root directory run: ``make``
-- run "/da_browser_launcher" from root
+- clone repository with ``git clone https://github.com/korkie9/da-browser-launcher.git``
+- ``cd da-browser-launcher``
+- Install dependancies: ``git clone https://github.com/native-toolkit/libtinyfiledialogs.git``
+- Run: ``make``
+- run ``./da_browser_launcher`` from root
 
 
 ## Resetting
