@@ -8,9 +8,7 @@ CFLAGS = -Wall -std=c++17
 LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -lsqlite3
 
 # Paths
-INCLUDES = -I./libtinyfiledialogs -I./utils
-LIBS = ./libtinyfiledialogs/tinyfiledialogs.c
-SRC = main.cpp utils/db.cpp utils/browser-menu.cpp $(LIBS)
+SRC = main.cpp utils/db.cpp utils/browser-menu.cpp
 OBJ = $(SRC:.cpp=.o)
 DB=database.db
 
@@ -25,7 +23,7 @@ $(TARGET): $(OBJ)
 
 # Compilation
 %.o: %.cpp
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(TARGET) $(DB)
