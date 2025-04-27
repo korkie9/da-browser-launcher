@@ -1,4 +1,3 @@
-
 #ifndef CS50_H
 #define CS50_H
 

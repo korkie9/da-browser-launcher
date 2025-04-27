@@ -36,6 +36,8 @@ int main() {
   const int screenHeight = 600;
   SetConfigFlags(FLAG_WINDOW_TRANSPARENT);
   InitWindow(screenWidth, screenHeight, "Raylib Button Example");
+  SetWindowOpacity(
+      0.5f); // Optional: set overall window transparency (0.0f to 1.0f)
   const char *selectedFilePath = nullptr;
   bool showAddProfileTextBox = false;
   Rectangle profileTextBox = {screenWidth / 2.0f - 150, 180, 425, 50};
@@ -50,6 +52,7 @@ int main() {
   int index = 0;
   bool editProfile = false;
   vector<Browser> browsers;
+  Font fontTtf = LoadFontEx("assets/EagleLake-Regular.ttf", 300, 0, 250);
   string getBrowserQuery = "SELECT * FROM Browsers;";
   sqlite3_exec(db, getBrowserQuery.c_str(), getBrowsersCallback, &browsers,
                nullptr);
@@ -208,26 +211,27 @@ int main() {
 
     // Draw
     BeginDrawing();
-    ClearBackground(GetColor(0x052c46ff));
+    ClearBackground(BLANK);
+    // ClearBackground(GetColor(0x052c46ff));
 
-    DrawTexturePro(
-        background,
-        Rectangle{0, 0, (float)background.width, (float)background.height},
-        Rectangle{scrollingBack, 0, (float)screenWidth, (float)screenHeight},
-        Vector2{0, 0}, 0.0f, WHITE);
-
-    DrawTexturePro(
-        background,
-        Rectangle{0, 0, (float)background.width, (float)background.height},
-        Rectangle{scrollingBack + screenWidth, 0, (float)screenWidth,
-                  (float)screenHeight},
-        Vector2{0, 0}, 0.0f, WHITE);
-    DrawTexturePro(
-        background,
-        Rectangle{0, 0, (float)background.width, (float)background.height},
-        Rectangle{scrollingBack + (screenWidth * 2), 0, (float)screenWidth,
-                  (float)screenHeight},
-        Vector2{0, 0}, 0.0f, WHITE);
+    // DrawTexturePro(
+    //     background,
+    //     Rectangle{0, 0, (float)background.width, (float)background.height},
+    //     Rectangle{scrollingBack, 0, (float)screenWidth, (float)screenHeight},
+    //     Vector2{0, 0}, 0.0f, WHITE);
+    //
+    // DrawTexturePro(
+    //     background,
+    //     Rectangle{0, 0, (float)background.width, (float)background.height},
+    //     Rectangle{scrollingBack + screenWidth, 0, (float)screenWidth,
+    //               (float)screenHeight},
+    //     Vector2{0, 0}, 0.0f, WHITE);
+    // DrawTexturePro(
+    //     background,
+    //     Rectangle{0, 0, (float)background.width, (float)background.height},
+    //     Rectangle{scrollingBack + (screenWidth * 2), 0, (float)screenWidth,
+    //               (float)screenHeight},
+    //     Vector2{0, 0}, 0.0f, WHITE);
     const float buttonHeight = 60;
     const float buttonSpacing = 10;
 
@@ -238,10 +242,11 @@ int main() {
                           (float)(20 + (buttonHeight + buttonSpacing) * i), 600,
                           buttonHeight};
 
+      // here
       if (CheckCollisionPointRec(mousePosition, button)) {
         buttonColor = buttonHoverColor;
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !browsers.empty()) {
-          string cmd = browsers[0].path + " -P " + profiles[index].name + " &";
+          string cmd = browsers[0].path + " -P " + profiles[i].name + " &";
           openBrowserAndCloseProgram(db, &convertableTexture, cmd);
         }
       } else {
@@ -251,24 +256,25 @@ int main() {
         buttonColor = LIGHTGRAY;
       }
       DrawRectangleRounded(button, 0.3f, 10, buttonColor);
-      DrawText(profiles[i].name.c_str(), button.x + 30, button.y + 15, 20,
-               BLACK);
+      DrawTextEx(fontTtf, profiles[i].name.c_str(),
+                 (Vector2){button.x + 30, button.y + 15}, 43.0f, 5.0f, BLACK);
     }
 
     if (showAddProfileTextBox) {
 
       DrawRectangleRounded(profileTextBox, 0.3f, 10, LIGHTGRAY);
-      DrawRectangleRoundedLines(profileTextBox, 0.3f, 10, 2.0f, BLUE);
-      DrawText(text.c_str(), (int)profileTextBox.x + 5,
-               (int)profileTextBox.y + 8, 40, MAROON);
+      DrawRectangleRoundedLines(profileTextBox, 0.3f, 10, BLUE);
+      DrawTextEx(fontTtf, text.c_str(),
+                 (Vector2){profileTextBox.x + 5, profileTextBox.y + 8}, 40.0f,
+                 5.0f, MAROON);
     }
 
     DrawRectangleRounded(selectedFilePathBtn, 0.3f, 10,
                          selectedbuttonhovercolor);
-    DrawRectangleRoundedLines(selectedFilePathBtn, 0.3f, 10, 2.0f, BLUE);
+    DrawRectangleRoundedLines(selectedFilePathBtn, 0.3f, 10, BLUE);
 
     DrawRectangleRounded(addProfileBtn, 0.3f, 10, addProfileBtnColor);
-    DrawRectangleRoundedLines(addProfileBtn, 0.3f, 10, 2.0f, BLUE);
+    DrawRectangleRoundedLines(addProfileBtn, 0.3f, 10, BLUE);
     DrawText("+", addProfileBtn.x + 20, addProfileBtn.y + 5, 50, BLACK);
 
     Rectangle sourceRect = {0.0f, 0.0f, (float)convertableTexture.width,
