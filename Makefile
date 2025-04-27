@@ -10,7 +10,7 @@ LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -lsqlite3
 # Paths
 INCLUDES = -I./libtinyfiledialogs -I./utils
 LIBS = ./libtinyfiledialogs/tinyfiledialogs.c
-SRC = main.cpp utils/db.cpp $(LIBS)
+SRC = main.cpp utils/db.cpp utils/browser-menu.cpp $(LIBS)
 OBJ = $(SRC:.cpp=.o)
 DB=database.db
 

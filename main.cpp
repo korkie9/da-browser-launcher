@@ -1,5 +1,5 @@
-#include "./libtinyfiledialogs/tinyfiledialogs.h"
 #include "./utils/db.h"
+#include "models/browser.h"
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -16,15 +16,16 @@ struct Browser;
 int getProfilesCallback(void *data, int argc, char **argv, char **azColName);
 int getBrowsersCallback(void *data, int argc, char **argv, char **azColName);
 void openBrowserAndCloseProgram(sqlite3 *db, Texture2D *convertableTexture,
-                                string cmd);
+                                string cmd, Font *font, Image *listIcon,
+                                Image *addIcon);
+
+void showMenu(Vector2 &mousePosition, Font &font, sqlite3 *db,
+              vector<Browser> &browserDbList, string *screen);
 struct Profile {
   string id;
   string name;
 };
-struct Browser {
-  string id;
-  string path;
-};
+
 int main() {
   sqlite3 *db;
   openDb(&db);
@@ -36,8 +37,7 @@ int main() {
   const int screenHeight = 600;
   SetConfigFlags(FLAG_WINDOW_TRANSPARENT);
   InitWindow(screenWidth, screenHeight, "Raylib Button Example");
-  SetWindowOpacity(
-      0.5f); // Optional: set overall window transparency (0.0f to 1.0f)
+  SetWindowOpacity(0.5f);
   const char *selectedFilePath = nullptr;
   bool showAddProfileTextBox = false;
   Rectangle profileTextBox = {screenWidth / 2.0f - 150, 180, 425, 50};
@@ -56,6 +56,11 @@ int main() {
   string getBrowserQuery = "SELECT * FROM Browsers;";
   sqlite3_exec(db, getBrowserQuery.c_str(), getBrowsersCallback, &browsers,
                nullptr);
+  string screen = "home";
+  Image addIcon = LoadImage("assets/add.png");
+  Texture2D addIconTexture = LoadTextureFromImage(addIcon);
+  Image listIcon = LoadImage("assets/list.png");
+  Texture2D listIconTexture = LoadTextureFromImage(listIcon);
 
   while (!WindowShouldClose()) {
 
@@ -79,7 +84,7 @@ int main() {
       editProfile = true;
       text = "";
     }
-    if ((IsKeyPressed(KEY_K) || IsKeyPressed(KEY_DOWN)) &&
+    if ((IsKeyPressed(KEY_K) || IsKeyPressed(KEY_UP)) &&
         !showAddProfileTextBox) {
       if (index - 1 > -1) {
         index--;
@@ -106,8 +111,23 @@ int main() {
     }
     if (IsKeyPressed(KEY_ENTER)) {
       if (!showAddProfileTextBox && !browsers.empty()) {
-        string cmd = browsers[0].path + " -P " + profiles[index].name + " &";
-        openBrowserAndCloseProgram(db, &convertableTexture, cmd);
+        string cmd = "";
+        if (browsers[0].path == "Firefox") {
+          cmd = cmd + "firefox" + " -P \"" + profiles[index].name + "\" &";
+        }
+        if (browsers[0].path == "Brave")
+          cmd = cmd + "brave" + " --profile-directory=\"" +
+                profiles[index].name + "\" &";
+        if (browsers[0].path == "Chrome")
+          cmd = cmd + "google-chrome-stable" + " --profile-directory=\"" +
+                profiles[index].name + "\" &";
+        if (browsers[0].path == "Zen")
+          cmd = "flatpak run app.zen_browser.zen -p \"" + profiles[index].name +
+                "\" &";
+
+        cout << (cmd) << endl;
+        openBrowserAndCloseProgram(db, &convertableTexture, cmd, &fontTtf,
+                                   &listIcon, &addIcon);
       }
       if (showAddProfileTextBox) {
 
@@ -167,10 +187,9 @@ int main() {
 
     Color selectedbuttonhovercolor = DARKGRAY;
     Color addProfileBtnColor = DARKGRAY;
-    Rectangle selectedFilePathBtn = {(float)(screenWidth - 60) / 2,
-                                     screenHeight - 85, 60, 60};
+    Rectangle selectBrowserBtn = {(float)(screenWidth + 600) / 2, 25, 60, 60};
 
-    Rectangle addProfileBtn = {(float)(screenWidth + 400) / 2,
+    Rectangle addProfileBtn = {(float)(screenWidth + 600) / 2,
                                screenHeight - 85, 60, 60};
 
     if (CheckCollisionPointRec(mousePosition, addProfileBtn)) {
@@ -183,26 +202,10 @@ int main() {
       addProfileBtnColor = DARKGRAY;
     }
 
-    if (CheckCollisionPointRec(mousePosition, selectedFilePathBtn)) {
+    if (CheckCollisionPointRec(mousePosition, selectBrowserBtn)) {
       selectedbuttonhovercolor = LIGHTGRAY;
       if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-        selectedFilePath =
-            tinyfd_openFileDialog("Choose browser file", "", 0, NULL, NULL, 0);
-        if (selectedFilePath != nullptr) {
-          string addBrowserQuery = "INSERT INTO Browsers (path) VALUES ('" +
-                                   (string)selectedFilePath + "');";
-          char *errMsg = nullptr;
-
-          int rc = sqlite3_exec(db, addBrowserQuery.c_str(),
-                                getBrowsersCallback, &browsers, nullptr);
-          if (rc != SQLITE_OK) {
-            std::cerr << "SQL error: " << errMsg << std::endl;
-            sqlite3_free(errMsg);
-          } else {
-            browsers.push_back(
-                {to_string(profiles.size() + 1), selectedFilePath});
-          }
-        }
+        screen = "menu";
       }
 
     } else {
@@ -212,52 +215,39 @@ int main() {
     // Draw
     BeginDrawing();
     ClearBackground(BLANK);
-    // ClearBackground(GetColor(0x052c46ff));
 
-    // DrawTexturePro(
-    //     background,
-    //     Rectangle{0, 0, (float)background.width, (float)background.height},
-    //     Rectangle{scrollingBack, 0, (float)screenWidth, (float)screenHeight},
-    //     Vector2{0, 0}, 0.0f, WHITE);
-    //
-    // DrawTexturePro(
-    //     background,
-    //     Rectangle{0, 0, (float)background.width, (float)background.height},
-    //     Rectangle{scrollingBack + screenWidth, 0, (float)screenWidth,
-    //               (float)screenHeight},
-    //     Vector2{0, 0}, 0.0f, WHITE);
-    // DrawTexturePro(
-    //     background,
-    //     Rectangle{0, 0, (float)background.width, (float)background.height},
-    //     Rectangle{scrollingBack + (screenWidth * 2), 0, (float)screenWidth,
-    //               (float)screenHeight},
-    //     Vector2{0, 0}, 0.0f, WHITE);
     const float buttonHeight = 60;
     const float buttonSpacing = 10;
 
-    for (size_t i = 0; i < profiles.size(); i++) {
-      Color buttonColor = DARKGRAY;
-      Color buttonHoverColor = LIGHTGRAY;
-      Rectangle button = {(float)50,
-                          (float)(20 + (buttonHeight + buttonSpacing) * i), 600,
-                          buttonHeight};
+    if (screen == "home") {
 
-      // here
-      if (CheckCollisionPointRec(mousePosition, button)) {
-        buttonColor = buttonHoverColor;
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !browsers.empty()) {
-          string cmd = browsers[0].path + " -P " + profiles[i].name + " &";
-          openBrowserAndCloseProgram(db, &convertableTexture, cmd);
+      for (size_t i = 0; i < profiles.size(); i++) {
+        Color buttonColor = Color{66, 135, 245, 70};
+        Color buttonHoverColor = Color{66, 135, 245, 200};
+        Rectangle button = {(float)50,
+                            (float)(20 + (buttonHeight + buttonSpacing) * i),
+                            600, buttonHeight};
+
+        if (CheckCollisionPointRec(mousePosition, button)) {
+          buttonColor = buttonHoverColor;
+          if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !browsers.empty()) {
+            string cmd = browsers[0].path + " -P " + profiles[i].name + " &";
+            openBrowserAndCloseProgram(db, &convertableTexture, cmd, &fontTtf,
+                                       &listIcon, &addIcon);
+          }
+        } else {
+          buttonColor = Color{66, 135, 245, 70};
         }
-      } else {
-        buttonColor = DARKGRAY;
+        if (index == (int)i) {
+          buttonColor = Color{66, 135, 245, 200};
+          ;
+        }
+        DrawRectangleRounded(button, 0.3f, 10, buttonColor);
+        DrawTextEx(fontTtf, profiles[i].name.c_str(),
+                   (Vector2){button.x + 30, button.y + 15}, 43.0f, 5.0f, BLACK);
       }
-      if (index == (int)i) {
-        buttonColor = LIGHTGRAY;
-      }
-      DrawRectangleRounded(button, 0.3f, 10, buttonColor);
-      DrawTextEx(fontTtf, profiles[i].name.c_str(),
-                 (Vector2){button.x + 30, button.y + 15}, 43.0f, 5.0f, BLACK);
+    } else {
+      showMenu(mousePosition, fontTtf, db, browsers, &screen);
     }
 
     if (showAddProfileTextBox) {
@@ -269,19 +259,19 @@ int main() {
                  5.0f, MAROON);
     }
 
-    DrawRectangleRounded(selectedFilePathBtn, 0.3f, 10,
-                         selectedbuttonhovercolor);
-    DrawRectangleRoundedLines(selectedFilePathBtn, 0.3f, 10, BLUE);
+    // Add profile button
+    Rectangle addRect = {0.0f, 0.0f, (float)addIconTexture.width,
+                         (float)addIconTexture.height};
 
-    DrawRectangleRounded(addProfileBtn, 0.3f, 10, addProfileBtnColor);
-    DrawRectangleRoundedLines(addProfileBtn, 0.3f, 10, BLUE);
-    DrawText("+", addProfileBtn.x + 20, addProfileBtn.y + 5, 50, BLACK);
+    DrawTexturePro(addIconTexture, addRect, addProfileBtn, Vector2{0, 0}, 0.0f,
+                   WHITE);
 
-    Rectangle sourceRect = {0.0f, 0.0f, (float)convertableTexture.width,
-                            (float)convertableTexture.height};
-
-    DrawTexturePro(convertableTexture, sourceRect, selectedFilePathBtn,
-                   Vector2{0, 0}, 0.0f, WHITE);
+    // Select browser button
+    Rectangle sourceRect = {0.0f, 0.0f, (float)listIconTexture.width,
+                            (float)listIconTexture.height};
+    //
+    DrawTexturePro(listIconTexture, sourceRect, selectBrowserBtn, Vector2{0, 0},
+                   0.0f, WHITE);
 
     if (profiles.empty()) {
       DrawText("No profile has been set", 10, 15, 24, RED);
@@ -322,11 +312,15 @@ int getBrowsersCallback(void *data, int argc, char **argv, char **azColName) {
 }
 
 void openBrowserAndCloseProgram(sqlite3 *db, Texture2D *convertableTexture,
-                                string cmd) {
+                                string cmd, Font *font, Image *listIcon,
+                                Image *addIcon) {
   system(cmd.c_str());
   if (db)
     sqlite3_close(db);
   UnloadTexture(*convertableTexture);
+  UnloadFont(*font);
+  UnloadImage(*listIcon);
+  UnloadImage(*addIcon);
   CloseWindow();
   exit(0);
 }

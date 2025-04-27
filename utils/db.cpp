@@ -20,7 +20,8 @@ bool openDb(sqlite3 **db) {
                                "NAME TEXT NOT NULL);"
                                "CREATE TABLE IF NOT EXISTS Browsers ("
                                "ID INTEGER PRIMARY KEY AUTOINCREMENT,"
-                               "PATH TEXT NOT NULL);";
+                               "PATH TEXT NOT NULL);"
+                               "INSERT INTO Browsers (path) VALUES ('Firefox')";
 
   if (sqlite3_exec(*db, sqlCreateTable, nullptr, 0, &errMsg) != SQLITE_OK) {
     cerr << "SQL error: " << errMsg << endl;
