@@ -1,4 +1,5 @@
 #include "./libtinyfiledialogs/tinyfiledialogs.h"
+#include "./utils/browser-menu.h"
 #include "./utils/db.h"
 #include <cstdio>
 #include <cstdlib>
@@ -16,7 +17,9 @@ struct Browser;
 int getProfilesCallback(void *data, int argc, char **argv, char **azColName);
 int getBrowsersCallback(void *data, int argc, char **argv, char **azColName);
 void openBrowserAndCloseProgram(sqlite3 *db, Texture2D *convertableTexture,
-                                string cmd);
+                                string cmd, Font *font);
+
+void showMenu(Vector2 &mousePosition, Font &fontTtf);
 struct Profile {
   string id;
   string name;
@@ -56,6 +59,7 @@ int main() {
   string getBrowserQuery = "SELECT * FROM Browsers;";
   sqlite3_exec(db, getBrowserQuery.c_str(), getBrowsersCallback, &browsers,
                nullptr);
+  string screen = "home";
 
   while (!WindowShouldClose()) {
 
@@ -107,7 +111,7 @@ int main() {
     if (IsKeyPressed(KEY_ENTER)) {
       if (!showAddProfileTextBox && !browsers.empty()) {
         string cmd = browsers[0].path + " -P " + profiles[index].name + " &";
-        openBrowserAndCloseProgram(db, &convertableTexture, cmd);
+        openBrowserAndCloseProgram(db, &convertableTexture, cmd, &fontTtf);
       }
       if (showAddProfileTextBox) {
 
@@ -186,6 +190,8 @@ int main() {
     if (CheckCollisionPointRec(mousePosition, selectedFilePathBtn)) {
       selectedbuttonhovercolor = LIGHTGRAY;
       if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+
+        screen = "menu";
         selectedFilePath =
             tinyfd_openFileDialog("Choose browser file", "", 0, NULL, NULL, 0);
         if (selectedFilePath != nullptr) {
@@ -235,29 +241,35 @@ int main() {
     const float buttonHeight = 60;
     const float buttonSpacing = 10;
 
-    for (size_t i = 0; i < profiles.size(); i++) {
-      Color buttonColor = DARKGRAY;
-      Color buttonHoverColor = LIGHTGRAY;
-      Rectangle button = {(float)50,
-                          (float)(20 + (buttonHeight + buttonSpacing) * i), 600,
-                          buttonHeight};
+    if (screen == "menu") {
 
-      // here
-      if (CheckCollisionPointRec(mousePosition, button)) {
-        buttonColor = buttonHoverColor;
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !browsers.empty()) {
-          string cmd = browsers[0].path + " -P " + profiles[i].name + " &";
-          openBrowserAndCloseProgram(db, &convertableTexture, cmd);
+      for (size_t i = 0; i < profiles.size(); i++) {
+        Color buttonColor = Color{66, 135, 245, 70};
+        Color buttonHoverColor = Color{66, 135, 245, 200};
+        Rectangle button = {(float)50,
+                            (float)(20 + (buttonHeight + buttonSpacing) * i),
+                            600, buttonHeight};
+
+        // here
+        if (CheckCollisionPointRec(mousePosition, button)) {
+          buttonColor = buttonHoverColor;
+          if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !browsers.empty()) {
+            string cmd = browsers[0].path + " -P " + profiles[i].name + " &";
+            openBrowserAndCloseProgram(db, &convertableTexture, cmd, &fontTtf);
+          }
+        } else {
+          buttonColor = Color{66, 135, 245, 70};
         }
-      } else {
-        buttonColor = DARKGRAY;
+        if (index == (int)i) {
+          buttonColor = Color{66, 135, 245, 200};
+          ;
+        }
+        DrawRectangleRounded(button, 0.3f, 10, buttonColor);
+        DrawTextEx(fontTtf, profiles[i].name.c_str(),
+                   (Vector2){button.x + 30, button.y + 15}, 43.0f, 5.0f, BLACK);
       }
-      if (index == (int)i) {
-        buttonColor = LIGHTGRAY;
-      }
-      DrawRectangleRounded(button, 0.3f, 10, buttonColor);
-      DrawTextEx(fontTtf, profiles[i].name.c_str(),
-                 (Vector2){button.x + 30, button.y + 15}, 43.0f, 5.0f, BLACK);
+    } else {
+      showMenu(mousePosition, fontTtf);
     }
 
     if (showAddProfileTextBox) {
@@ -322,11 +334,12 @@ int getBrowsersCallback(void *data, int argc, char **argv, char **azColName) {
 }
 
 void openBrowserAndCloseProgram(sqlite3 *db, Texture2D *convertableTexture,
-                                string cmd) {
+                                string cmd, Font *font) {
   system(cmd.c_str());
   if (db)
     sqlite3_close(db);
   UnloadTexture(*convertableTexture);
+  UnloadFont(*font);
   CloseWindow();
   exit(0);
 }
