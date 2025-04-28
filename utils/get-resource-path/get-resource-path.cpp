@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <iostream>
 #include <string>
 #include <unistd.h>
 
@@ -18,8 +19,10 @@ string find_resource(const string &fileName) {
 
   // User path
   string user_path = get_resource_path() + fileName;
-  if (exists(user_path))
+  if (exists(user_path)) {
+    cout << user_path << endl;
     return user_path;
+  }
 
   throw std::runtime_error("Resource not found: " + fileName);
 }

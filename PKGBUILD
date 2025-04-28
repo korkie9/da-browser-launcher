@@ -19,9 +19,11 @@ build() {
 package() {
   cd "$pkgname"
 
-  # Install binary
   install -Dm755 "da_browser_launcher" "$pkgdir/usr/bin/da-browser-launcher"
 
-  # Install assets
-  install -Dm644 assets/* -t "$pkgdir/usr/share/da-browser-launcher/"
+  install -dm755 "$pkgdir/usr/share/da-browser-launcher"
+
+  if [ -d "assets" ]; then
+    install -Dm644 assets/* -t "$pkgdir/usr/share/da-browser-launcher/"
+  fi
 }

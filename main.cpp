@@ -52,7 +52,7 @@ int main() {
   int index = 0;
   bool editProfile = false;
   vector<Browser> browsers;
-  string fontStr = "assets/EagleLake-Regular.ttf";
+  string fontStr = "EagleLake-Regular.ttf";
   Font fontTtf = LoadFontEx(find_resource(fontStr).c_str(), 300, 0, 250);
   string getBrowserQuery = "SELECT * FROM Browsers;";
   sqlite3_exec(db, getBrowserQuery.c_str(), getBrowsersCallback, &browsers,
