@@ -1,4 +1,4 @@
-#include "../models/browser.h"
+#include "../../models/browser.h"
 #include <iostream>
 #include <raylib.h>
 #include <sqlite3.h>
@@ -15,26 +15,24 @@ void addBrowser(string browser, sqlite3 *db, vector<Browser> &browserDbList,
 void showMenu(Vector2 &mousePosition, Font &font, sqlite3 *db,
               vector<Browser> &browserDbList, string *screen) {
 
-  Color buttonColor = Color{66, 135, 245, 70};
+  Color buttonInactiveColor = Color{66, 135, 245, 70};
+  Color buttonHoverColor = Color{66, 135, 245, 200};
+  Color buttonColor = Color{66, 135, 245, 200};
 
   const float buttonHeight = 60;
   const float buttonSpacing = 10;
-  for (int i = 0; i < browsers.size(); i++) {
-    Color buttonColor = Color{66, 135, 245, 70};
-
-    Color buttonHoverColor = Color{66, 135, 245, 200};
+  for (int i = 0; i < (int)browsers.size(); i++) {
     Rectangle button = {(float)50,
                         (float)(20 + (buttonHeight + buttonSpacing) * i), 600,
                         buttonHeight};
 
-    // here
     if (CheckCollisionPointRec(mousePosition, button)) {
       buttonColor = buttonHoverColor;
       if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !browsers.empty()) {
         addBrowser(browsers[i], db, browserDbList, screen);
       }
     } else {
-      buttonColor = Color{66, 135, 245, 70};
+      buttonColor = buttonInactiveColor;
     }
     DrawRectangleRounded(button, 0.3f, 10, buttonColor);
     DrawTextEx(font, browsers[i].c_str(),

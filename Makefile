@@ -8,14 +8,16 @@ CFLAGS = -Wall -std=c++17
 LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -lsqlite3
 
 # Paths
-SRC = main.cpp utils/db.cpp utils/browser-menu.cpp
+SRC = main.cpp utils/db/db.cpp utils/browser-menu/browser-menu.cpp utils/get-resource-path/get-resource-path.cpp
 OBJ = $(SRC:.cpp=.o)
-DB=database.db
+CONFIG_DIR = $(HOME)/.config/da-browser-launcher
+RESOURCE_DIR = resources
+DB = $(CONFIG_DIR)/database.db
 
 # Target executable
 TARGET = da_browser_launcher
 
-all: $(TARGET)
+all: | $(CONFIG_DIR) $(TARGET)
 
 # Linking
 $(TARGET): $(OBJ)
@@ -27,3 +29,7 @@ $(TARGET): $(OBJ)
 
 clean:
 	rm -f $(TARGET) $(DB)
+
+install-resources:
+	mkdir -p ~/.local/share/da-browser-launcher/
+	cp -r assets/* ~/.local/share/da-browser-launcher/
