@@ -15,9 +15,14 @@ using namespace std;
 struct Browser;
 int getProfilesCallback(void *data, int argc, char **argv, char **azColName);
 int getBrowsersCallback(void *data, int argc, char **argv, char **azColName);
-void openBrowserAndCloseProgram(sqlite3 *db, Texture2D *convertableTexture,
-                                string cmd, Font *font, Image *listIcon,
-                                Image *addIcon);
+void openBrowserAndCloseProgram(sqlite3 *db, string cmd, Font *font,
+                                Texture2D *addIconTexture,
+                                Texture2D *listIconTexture, Image *addIcon,
+                                Image *listIcon);
+
+void cleanupResources(sqlite3 *db, Texture2D *addIconTexture,
+                      Texture2D *listIconTexture, Font *font, Image *addIcon,
+                      Image *listIcon);
 
 void showMenu(Vector2 &mousePosition, Font &font, sqlite3 *db,
               vector<Browser> &browserDbList, string *screen);
@@ -38,16 +43,10 @@ int main() {
   SetConfigFlags(FLAG_WINDOW_TRANSPARENT);
   InitWindow(screenWidth, screenHeight, "Raylib Button Example");
   SetWindowOpacity(0.5f);
-  const char *selectedFilePath = nullptr;
   bool showAddProfileTextBox = false;
   Rectangle profileTextBox = {screenWidth / 2.0f - 150, 180, 425, 50};
   string text;
   SetExitKey(KEY_NULL);
-  Texture2D background = LoadTexture("assets/dababy.png");
-  Image convertable = LoadImage("assets/dababy-convertable.png");
-  Texture2D convertableTexture = LoadTextureFromImage(convertable);
-  UnloadImage(convertable);
-  background.width = screenWidth;
   float scrollingBack = 0.0f;
   int index = 0;
   bool editProfile = false;
@@ -71,8 +70,6 @@ int main() {
         text += (char)key;
       }
     }
-    if (scrollingBack <= -background.width * 2)
-      scrollingBack = 0;
     if ((IsKeyPressed(KEY_J) || IsKeyPressed(KEY_DOWN)) &&
         !showAddProfileTextBox) {
       if (index + 1 < static_cast<int>(profiles.size())) {
@@ -126,8 +123,8 @@ int main() {
                 "\" &";
 
         cout << (cmd) << endl;
-        openBrowserAndCloseProgram(db, &convertableTexture, cmd, &fontTtf,
-                                   &listIcon, &addIcon);
+        openBrowserAndCloseProgram(db, cmd, &fontTtf, &addIconTexture,
+                                   &listIconTexture, &addIcon, &listIcon);
       }
       if (showAddProfileTextBox) {
 
@@ -232,8 +229,8 @@ int main() {
           buttonColor = buttonHoverColor;
           if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !browsers.empty()) {
             string cmd = browsers[0].path + " -P " + profiles[i].name + " &";
-            openBrowserAndCloseProgram(db, &convertableTexture, cmd, &fontTtf,
-                                       &listIcon, &addIcon);
+            openBrowserAndCloseProgram(db, cmd, &fontTtf, &listIconTexture,
+                                       &addIconTexture, &addIcon, &listIcon);
           }
         } else {
           buttonColor = Color{66, 135, 245, 70};
@@ -285,12 +282,9 @@ int main() {
     EndDrawing();
   }
 
-  UnloadTexture(convertableTexture);
-
-  // Close the window
-  if (db) {
-    sqlite3_close(db);
-  }
+  // manual cleanup
+  cleanupResources(db, &addIconTexture, &listIconTexture, &fontTtf, &addIcon,
+                   &listIcon);
   CloseWindow();
   return 0;
 }
@@ -311,16 +305,30 @@ int getBrowsersCallback(void *data, int argc, char **argv, char **azColName) {
   return 0;
 }
 
-void openBrowserAndCloseProgram(sqlite3 *db, Texture2D *convertableTexture,
-                                string cmd, Font *font, Image *listIcon,
-                                Image *addIcon) {
+void openBrowserAndCloseProgram(sqlite3 *db, string cmd, Font *font,
+                                Texture2D *addIconTexture,
+                                Texture2D *listIconTexture, Image *addIcon,
+                                Image *listIcon) {
   system(cmd.c_str());
-  if (db)
-    sqlite3_close(db);
-  UnloadTexture(*convertableTexture);
-  UnloadFont(*font);
-  UnloadImage(*listIcon);
-  UnloadImage(*addIcon);
+  cleanupResources(db, addIconTexture, listIconTexture, font, addIcon,
+                   listIcon);
   CloseWindow();
   exit(0);
+}
+
+void cleanupResources(sqlite3 *db, Texture2D *addIconTexture,
+                      Texture2D *listIconTexture, Font *font, Image *addIcon,
+                      Image *listIcon) {
+  if (db)
+    sqlite3_close(db);
+  if (addIconTexture)
+    UnloadTexture(*addIconTexture);
+  if (listIconTexture)
+    UnloadTexture(*listIconTexture);
+  if (font)
+    UnloadFont(*font);
+  if (addIcon)
+    UnloadImage(*addIcon);
+  if (listIcon)
+    UnloadImage(*listIcon);
 }
