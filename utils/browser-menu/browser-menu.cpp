@@ -1,4 +1,4 @@
-#include "../models/browser.h"
+#include "../../models/browser.h"
 #include <iostream>
 #include <raylib.h>
 #include <sqlite3.h>

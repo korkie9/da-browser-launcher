@@ -1,15 +1,21 @@
+#include <filesystem>
 #include <iostream>
 #include <raylib.h>
 #include <sqlite3.h>
 
 using namespace std;
 
-// Function to open a database and create a table if it doesn't exist
 bool openDb(sqlite3 **db) {
-  char *errMsg = nullptr; // Pointer for error message
+  char *errMsg = nullptr;
 
-  // Open the database (creates it if it doesn't exist)
-  if (sqlite3_open("database.db", db) != SQLITE_OK) {
+  // Open database (creates it if it doesn't exist)
+  const char *configDir = getenv("XDG_CONFIG_HOME");
+  string dbDir = configDir ? configDir : string(getenv("HOME")) + "/.config";
+  dbDir += "/da-browser-launcher";
+  filesystem::create_directories(dbDir);
+  string dbPath = dbDir + "/database.db";
+
+  if (sqlite3_open(dbPath.c_str(), db) != SQLITE_OK) {
     cerr << "Can't open database: " << sqlite3_errmsg(*db) << endl;
     CloseWindow();
     return false;
@@ -26,7 +32,7 @@ bool openDb(sqlite3 **db) {
   if (sqlite3_exec(*db, sqlCreateTable, nullptr, 0, &errMsg) != SQLITE_OK) {
     cerr << "SQL error: " << errMsg << endl;
     sqlite3_free(errMsg);
-    return false; // Return false if there was an error
+    return false;
   } else {
     cout << "Table created successfully." << endl;
   }

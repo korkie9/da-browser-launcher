@@ -1,4 +1,4 @@
-#include "./utils/db.h"
+#include "./utils/db/db.h"
 #include "models/browser.h"
 #include <cstdio>
 #include <cstdlib>
@@ -24,6 +24,7 @@ void cleanupResources(sqlite3 *db, Texture2D *addIconTexture,
                       Texture2D *listIconTexture, Font *font, Image *addIcon,
                       Image *listIcon);
 
+string find_resource(const string &fileName);
 void showMenu(Vector2 &mousePosition, Font &font, sqlite3 *db,
               vector<Browser> &browserDbList, string *screen);
 struct Profile {
@@ -51,14 +52,17 @@ int main() {
   int index = 0;
   bool editProfile = false;
   vector<Browser> browsers;
-  Font fontTtf = LoadFontEx("assets/EagleLake-Regular.ttf", 300, 0, 250);
+  string fontStr = "assets/EagleLake-Regular.ttf";
+  Font fontTtf = LoadFontEx(find_resource(fontStr).c_str(), 300, 0, 250);
   string getBrowserQuery = "SELECT * FROM Browsers;";
   sqlite3_exec(db, getBrowserQuery.c_str(), getBrowsersCallback, &browsers,
                nullptr);
   string screen = "home";
-  Image addIcon = LoadImage("assets/add.png");
+  string addImgStr = "add.png";
+  string listImgStr = "list.png";
+  Image addIcon = LoadImage(find_resource(addImgStr).c_str());
   Texture2D addIconTexture = LoadTextureFromImage(addIcon);
-  Image listIcon = LoadImage("assets/list.png");
+  Image listIcon = LoadImage(find_resource(listImgStr).c_str());
   Texture2D listIconTexture = LoadTextureFromImage(listIcon);
 
   while (!WindowShouldClose()) {
@@ -228,9 +232,26 @@ int main() {
         if (CheckCollisionPointRec(mousePosition, button)) {
           buttonColor = buttonHoverColor;
           if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !browsers.empty()) {
-            string cmd = browsers[0].path + " -P " + profiles[i].name + " &";
-            openBrowserAndCloseProgram(db, cmd, &fontTtf, &listIconTexture,
-                                       &addIconTexture, &addIcon, &listIcon);
+            if (!showAddProfileTextBox && !browsers.empty()) {
+              string cmd = "";
+              if (browsers[0].path == "Firefox") {
+                cmd =
+                    cmd + "firefox" + " -P \"" + profiles[index].name + "\" &";
+              }
+              if (browsers[0].path == "Brave")
+                cmd = cmd + "brave" + " --profile-directory=\"" +
+                      profiles[index].name + "\" &";
+              if (browsers[0].path == "Chrome")
+                cmd = cmd + "google-chrome-stable" + " --profile-directory=\"" +
+                      profiles[index].name + "\" &";
+              if (browsers[0].path == "Zen")
+                cmd = "flatpak run app.zen_browser.zen -p \"" +
+                      profiles[index].name + "\" &";
+
+              cout << (cmd) << endl;
+              openBrowserAndCloseProgram(db, cmd, &fontTtf, &addIconTexture,
+                                         &listIconTexture, &addIcon, &listIcon);
+            }
           }
         } else {
           buttonColor = Color{66, 135, 245, 70};
@@ -271,13 +292,10 @@ int main() {
                    0.0f, WHITE);
 
     if (profiles.empty()) {
-      DrawText("No profile has been set", 10, 15, 24, RED);
-      DrawText("(Click DaPlus (+) sign to add profile)", 10, 35, 18, RED);
-    }
-    if (browsers.empty()) {
-      DrawText("DaBrowser has not been set", 10, screenHeight - 75, 22, RED);
-      DrawText("(Click DaConvertible to add set brower) =>", 10,
-               screenHeight - 45, 16, RED);
+      DrawTextEx(fontTtf, "No profile has been set", (Vector2){10, 15}, 36.0f,
+                 3.0f, RED);
+      DrawTextEx(fontTtf, "Click the plus (+) sign to add profile",
+                 (Vector2){10, 50}, 36.0f, 3.0f, RED);
     }
     EndDrawing();
   }
