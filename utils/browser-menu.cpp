@@ -26,7 +26,6 @@ void showMenu(Vector2 &mousePosition, Font &font, sqlite3 *db,
                         (float)(20 + (buttonHeight + buttonSpacing) * i), 600,
                         buttonHeight};
 
-    // here
     if (CheckCollisionPointRec(mousePosition, button)) {
       buttonColor = buttonHoverColor;
       if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !browsers.empty()) {
