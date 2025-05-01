@@ -17,12 +17,14 @@ int getProfilesCallback(void *data, int argc, char **argv, char **azColName);
 int getBrowsersCallback(void *data, int argc, char **argv, char **azColName);
 void openBrowserAndCloseProgram(sqlite3 *db, string cmd, Font *font,
                                 Texture2D *addIconTexture,
-                                Texture2D *listIconTexture, Image *addIcon,
-                                Image *listIcon);
+                                Texture2D *listIconTexture,
+                                Texture2D *houseIconTexture, Image *addIcon,
+                                Image *listIcon, Image *houseIcon);
 
 void cleanupResources(sqlite3 *db, Texture2D *addIconTexture,
-                      Texture2D *listIconTexture, Font *font, Image *addIcon,
-                      Image *listIcon);
+                      Texture2D *listIconTexture, Texture2D *houseIconTexture,
+                      Font *font, Image *addIcon, Image *listIcon,
+                      Image *houseIcon);
 
 string find_resource(const string &fileName);
 void showMenu(Vector2 &mousePosition, Font &font, sqlite3 *db,
@@ -45,7 +47,7 @@ int main() {
   InitWindow(screenWidth, screenHeight, "Raylib Button Example");
   SetWindowOpacity(0.5f);
   bool showAddProfileTextBox = false;
-  Rectangle profileTextBox = {screenWidth / 2.0f - 150, 180, 425, 50};
+  Rectangle profileTextBox = {screenWidth / 2.0f - 160, 180, 450, 60};
   string text;
   SetExitKey(KEY_NULL);
   float scrollingBack = 0.0f;
@@ -60,10 +62,13 @@ int main() {
   string screen = "home";
   string addImgStr = "add.png";
   string listImgStr = "list.png";
+  string houseImgStr = "house.png";
   Image addIcon = LoadImage(find_resource(addImgStr).c_str());
   Texture2D addIconTexture = LoadTextureFromImage(addIcon);
   Image listIcon = LoadImage(find_resource(listImgStr).c_str());
   Texture2D listIconTexture = LoadTextureFromImage(listIcon);
+  Image houseIcon = LoadImage(find_resource(houseImgStr).c_str());
+  Texture2D houseIconTexture = LoadTextureFromImage(houseIcon);
 
   while (!WindowShouldClose()) {
 
@@ -128,7 +133,8 @@ int main() {
 
         cout << (cmd) << endl;
         openBrowserAndCloseProgram(db, cmd, &fontTtf, &addIconTexture,
-                                   &listIconTexture, &addIcon, &listIcon);
+                                   &listIconTexture, &houseIconTexture,
+                                   &addIcon, &listIcon, &houseIcon);
       }
       if (showAddProfileTextBox) {
 
@@ -174,6 +180,13 @@ int main() {
 
       text = "";
     }
+
+    if (IsKeyPressed(KEY_ESCAPE)) {
+      if (screen != "home" && !showAddProfileTextBox) {
+        screen = "home";
+      }
+    }
+
     if (showAddProfileTextBox) {
       if (IsKeyPressed(KEY_BACKSPACE)) {
         if (text.size() > 0)
@@ -203,14 +216,31 @@ int main() {
       addProfileBtnColor = DARKGRAY;
     }
 
+    if (IsKeyPressed(KEY_A)) {
+      showAddProfileTextBox = true;
+    }
+
     if (CheckCollisionPointRec(mousePosition, selectBrowserBtn)) {
       selectedbuttonhovercolor = LIGHTGRAY;
       if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-        screen = "menu";
+        if (screen == "home") {
+          screen = "browserList";
+        } else if (screen == "browserList") {
+          screen = "home";
+        }
       }
 
     } else {
       selectedbuttonhovercolor = DARKGRAY;
+    }
+
+    if (IsKeyPressed(KEY_S) && !showAddProfileTextBox) {
+
+      if (screen == "home") {
+        screen = "browserList";
+      } else if (screen == "browserList") {
+        screen = "home";
+      }
     }
 
     // Draw
@@ -250,7 +280,8 @@ int main() {
 
               cout << (cmd) << endl;
               openBrowserAndCloseProgram(db, cmd, &fontTtf, &addIconTexture,
-                                         &listIconTexture, &addIcon, &listIcon);
+                                         &listIconTexture, &houseIconTexture,
+                                         &addIcon, &listIcon, &houseIcon);
             }
           }
         } else {
@@ -270,11 +301,11 @@ int main() {
 
     if (showAddProfileTextBox) {
 
-      DrawRectangleRounded(profileTextBox, 0.3f, 10, LIGHTGRAY);
+      DrawRectangleRounded(profileTextBox, 0.3f, 10, Color{71, 144, 166, 200});
       DrawRectangleRoundedLines(profileTextBox, 0.3f, 10, BLUE);
       DrawTextEx(fontTtf, text.c_str(),
-                 (Vector2){profileTextBox.x + 5, profileTextBox.y + 8}, 40.0f,
-                 5.0f, MAROON);
+                 (Vector2){profileTextBox.x + 12, profileTextBox.y + 8}, 40.0f,
+                 5.0f, BLACK);
     }
 
     // Add profile button
@@ -285,13 +316,21 @@ int main() {
                    WHITE);
 
     // Select browser button
-    Rectangle sourceRect = {0.0f, 0.0f, (float)listIconTexture.width,
-                            (float)listIconTexture.height};
-    //
-    DrawTexturePro(listIconTexture, sourceRect, selectBrowserBtn, Vector2{0, 0},
-                   0.0f, WHITE);
+    Rectangle houseSourceRect = {0.0f, 0.0f, (float)houseIconTexture.width,
+                                 (float)houseIconTexture.height};
 
-    if (profiles.empty()) {
+    Rectangle listSourceRect = {0.0f, 0.0f, (float)listIconTexture.width,
+                                (float)listIconTexture.height};
+    // heere
+    if (screen == "browserList") {
+      DrawTexturePro(houseIconTexture, houseSourceRect, selectBrowserBtn,
+                     Vector2{0, 0}, 0.0f, WHITE);
+    } else {
+      DrawTexturePro(listIconTexture, listSourceRect, selectBrowserBtn,
+                     Vector2{0, 0}, 0.0f, WHITE);
+    }
+
+    if (profiles.empty() && screen == "home") {
       DrawTextEx(fontTtf, "No profile has been set", (Vector2){10, 15}, 36.0f,
                  3.0f, RED);
       DrawTextEx(fontTtf, "Click the plus (+) sign to add profile",
@@ -301,8 +340,8 @@ int main() {
   }
 
   // manual cleanup
-  cleanupResources(db, &addIconTexture, &listIconTexture, &fontTtf, &addIcon,
-                   &listIcon);
+  cleanupResources(db, &addIconTexture, &listIconTexture, &houseIconTexture,
+                   &fontTtf, &addIcon, &listIcon, &houseIcon);
   CloseWindow();
   return 0;
 }
@@ -325,28 +364,34 @@ int getBrowsersCallback(void *data, int argc, char **argv, char **azColName) {
 
 void openBrowserAndCloseProgram(sqlite3 *db, string cmd, Font *font,
                                 Texture2D *addIconTexture,
-                                Texture2D *listIconTexture, Image *addIcon,
-                                Image *listIcon) {
+                                Texture2D *listIconTexture,
+                                Texture2D *houseIconTexture, Image *addIcon,
+                                Image *listIcon, Image *houseIcon) {
   system(cmd.c_str());
-  cleanupResources(db, addIconTexture, listIconTexture, font, addIcon,
-                   listIcon);
+  cleanupResources(db, addIconTexture, listIconTexture, houseIconTexture, font,
+                   addIcon, listIcon, houseIcon);
   CloseWindow();
   exit(0);
 }
 
 void cleanupResources(sqlite3 *db, Texture2D *addIconTexture,
-                      Texture2D *listIconTexture, Font *font, Image *addIcon,
-                      Image *listIcon) {
+                      Texture2D *listIconTexture, Texture2D *houseIconTexture,
+                      Font *font, Image *addIcon, Image *listIcon,
+                      Image *houseIcon) {
   if (db)
     sqlite3_close(db);
   if (addIconTexture)
     UnloadTexture(*addIconTexture);
   if (listIconTexture)
     UnloadTexture(*listIconTexture);
+  if (houseIconTexture)
+    UnloadTexture(*houseIconTexture);
   if (font)
     UnloadFont(*font);
   if (addIcon)
     UnloadImage(*addIcon);
   if (listIcon)
     UnloadImage(*listIcon);
+  if (houseIcon)
+    UnloadImage(*houseIcon);
 }
