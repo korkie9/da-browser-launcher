@@ -14,7 +14,7 @@ For instance, should a user wish to open Firefox with the profile name "John", i
 - raylib
 - sqlite
 
-## Running from source
+## Running/Installing from source
 - clone repository with ``git clone https://github.com/korkie9/da-browser-launcher.git``
 - ``cd da-browser-launcher``
 - Run: ``make``
@@ -27,6 +27,11 @@ OR
 - Install: makepkg -si
 - Run: da-browser-launcher
 
+
+# Installing via package manager
+
+### Arch
+`yay -S da-browser-launcher`
 
 
 ## Database
