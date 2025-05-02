@@ -1,6 +1,6 @@
 # Da Browser Launcher
 
-Da Browser Launcher was lets users launch their preferred browser in their specific profiles.
+Da Browser Launcher lets users launch their preferred browser in their specific profiles.
 
 For instance, should a user wish to open Firefox with the profile name "John", instead of going to `about:profiles` in their browser and searching for their profile manually, they can merely launch Da Browser Launcher and select their profile directly.
 
