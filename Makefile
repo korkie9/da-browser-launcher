@@ -2,10 +2,10 @@
 CC = g++
 
 # Compiler flags
-CFLAGS = -Wall -std=c++17
+CXXFLAGS ?= -Wall -std=c++17
 
 # Libraries
-LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -lsqlite3
+LDLIBS   += -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -lsqlite3
 
 # Paths
 SRC = main.cpp utils/db/db.cpp utils/browser-menu/browser-menu.cpp utils/get-resource-path/get-resource-path.cpp
@@ -21,11 +21,11 @@ all: | $(CONFIG_DIR) $(TARGET)
 
 # Linking
 $(TARGET): $(OBJ)
-	$(CC) $(OBJ) -o $(TARGET) $(LDFLAGS)
+	$(CXX) $(OBJ) $(LDFLAGS) $(LDLIBS) -o $@
 
 # Compilation
 %.o: %.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(TARGET) $(DB)
