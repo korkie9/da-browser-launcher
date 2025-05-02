@@ -1,6 +1,6 @@
 # Da Browser Launcher
 
-Da Browser Launcher was lets users launch their preferred browser in their specific profiles.
+Da Browser Launcher lets users launch their preferred browser in their specific profiles.
 
 For instance, should a user wish to open Firefox with the profile name "John", instead of going to `about:profiles` in their browser and searching for their profile manually, they can merely launch Da Browser Launcher and select their profile directly.
 
@@ -14,7 +14,7 @@ For instance, should a user wish to open Firefox with the profile name "John", i
 - raylib
 - sqlite
 
-## Running from source
+## Running/Installing from source
 - clone repository with ``git clone https://github.com/korkie9/da-browser-launcher.git``
 - ``cd da-browser-launcher``
 - Run: ``make``
@@ -27,6 +27,11 @@ OR
 - Install: makepkg -si
 - Run: da-browser-launcher
 
+
+# Installing via package manager
+
+### Arch
+`yay -S da-browser-launcher`
 
 
 ## Database
