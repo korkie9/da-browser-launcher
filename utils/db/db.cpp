@@ -30,6 +30,7 @@ bool openDb(sqlite3 **db) {
                                "INSERT INTO Browsers (path) VALUES ('Firefox')";
 
   if (sqlite3_exec(*db, sqlCreateTable, nullptr, 0, &errMsg) != SQLITE_OK) {
+    // TODO: add user feedback here
     cerr << "SQL error: " << errMsg << endl;
     sqlite3_free(errMsg);
     return false;

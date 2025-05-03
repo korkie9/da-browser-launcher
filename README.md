@@ -5,10 +5,11 @@ Da Browser Launcher lets users launch their preferred browser in their specific 
 For instance, should a user wish to open Firefox with the profile name "John", instead of going to `about:profiles` in their browser and searching for their profile manually, they can merely launch Da Browser Launcher and select their profile directly.
 
 ## Supported Browsers
+#### NOTE: App does not yet check if browser is installed. It will assume it is and run the appropriate script eg. 'firefox -P username'
 - Firefox
 - Brave
 - Chrome
-- Zen
+- Zen (NOTE: For Zen to launch, user will need to have Zen installed with [flatpak](https://flathub.org/apps/app.zen_browser.zen)
 
 ## Dependancies
 - raylib
