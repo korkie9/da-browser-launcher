@@ -17,7 +17,7 @@ DB = $(CONFIG_DIR)/database.db
 # Target executable
 TARGET = da_browser_launcher
 
-all: | $(CONFIG_DIR) $(TARGET)
+all: | $(TARGET)
 
 # Linking
 $(TARGET): $(OBJ)
